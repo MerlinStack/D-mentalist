@@ -13,6 +13,10 @@ export const useSoundStore = create(
       audioLevel: 0,
       error: null,
 
+      aiMode: false,
+      whisperModelLoaded: false,
+      semanticModelLoaded: false,
+
       setListening: (isListening) => set({ isListening }),
       appendTranscript: (text) => {
         const current = get().transcript
@@ -20,12 +24,17 @@ export const useSoundStore = create(
         const trimmed = lines.slice(-300).join('\n')
         set({ transcript: trimmed, recentChunk: text })
       },
+      setTranscript: (transcript) => set({ transcript }),
       setRecentChunk: (recentChunk) => set({ recentChunk }),
       setDetectedVerse: (detectedVerse) => set({ detectedVerse }),
       setAudioLevel: (audioLevel) => set({ audioLevel }),
       setSensitivity: (sensitivity) => set({ sensitivity }),
       setProcessing: (isProcessing) => set({ isProcessing }),
       setError: (error) => set({ error }),
+
+      setAiMode: (aiMode) => set({ aiMode }),
+      setWhisperModelLoaded: (whisperModelLoaded) => set({ whisperModelLoaded }),
+      setSemanticModelLoaded: (semanticModelLoaded) => set({ semanticModelLoaded }),
 
       clearTranscript: () => set({
         transcript: '', recentChunk: '', detectedVerse: null,
@@ -38,7 +47,7 @@ export const useSoundStore = create(
     }),
     {
       name: 'dmentalist-sound',
-      partialize: (state) => ({ sensitivity: state.sensitivity }),
+      partialize: (state) => ({ sensitivity: state.sensitivity, aiMode: state.aiMode }),
     }
   )
 )

@@ -1,7 +1,7 @@
 import { useProjectionListener } from '../hooks/useProjection'
 
 const themes = {
-  dark: { bg: '#0f0f1a', text: '#f1f5f9', accent: '#8b5cf6' },
+  dark: { bg: '#0F0F0F', text: '#f1f5f9', accent: '#8b5cf6' },
   light: { bg: '#f8fafc', text: '#0f172a', accent: '#6b3fa0' },
   warm: { bg: '#1c1917', text: '#fef3c7', accent: '#f59e0b' },
 }
@@ -85,6 +85,12 @@ export default function ProjectionPage() {
           background: `linear-gradient(90deg, transparent, ${config.accent}, transparent)`,
         }}
       />
+
+      <div className="fixed top-4 right-4 flex items-center gap-1.5 opacity-20
+                      hover:opacity-60 transition-opacity">
+        <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+        <span className="text-xs text-white font-mono">D'mentalist Live</span>
+      </div>
     </div>
   )
 }

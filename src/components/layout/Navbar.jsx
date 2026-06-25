@@ -7,7 +7,7 @@ export default function Navbar() {
   const { openProjectionWindow } = useProjection()
 
   return (
-    <nav className="sticky top-0 z-40 bg-[#0A0F1E]/80 backdrop-blur-xl border-b border-white/5">
+    <nav className="sticky top-0 z-40 bg-[#0F0F0F]/80 backdrop-blur-xl border-b border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14">
           <NavLink to="/" className="flex items-center gap-2.5 group">

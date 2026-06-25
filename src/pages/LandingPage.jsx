@@ -5,10 +5,10 @@ export default function LandingPage() {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen bg-[#0A0F1E] overflow-hidden">
+    <div className="min-h-screen bg-[#0F0F0F] overflow-hidden">
       {/* Subtle cross/light beam graphic */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full blur-3xl" style={{ background: 'radial-gradient(circle, rgba(79,107,255,0.08) 0%, rgba(79,107,255,0.04) 50%, transparent 70%)' }} />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full blur-3xl" style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.08) 0%, rgba(139,92,246,0.04) 50%, transparent 70%)' }} />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-full bg-gradient-to-b from-primary/20 via-primary/10 to-transparent" style={{ transform: 'translateX(-50%) rotate(15deg)' }} />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-full bg-gradient-to-b from-accent/10 via-accent/5 to-transparent" style={{ transform: 'translateX(-50%) rotate(-15deg)' }} />
       </div>
@@ -25,12 +25,12 @@ export default function LandingPage() {
             </div>
             <div className="flex items-center gap-3">
               <button
-                onClick={() => navigate('/app')}
+                onClick={() => navigate('/auth')}
                 className="text-sm text-text-secondary hover:text-text-primary transition-colors"
               >
                 Sign In
               </button>
-              <Button size="sm" onClick={() => navigate('/app')}>
+              <Button size="sm" onClick={() => navigate('/auth')}>
                 Get Started
               </Button>
             </div>
@@ -59,7 +59,7 @@ export default function LandingPage() {
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4">
-            <Button size="lg" onClick={() => navigate('/app')}>
+            <Button size="lg" onClick={() => navigate('/auth')}>
               Get Started
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />

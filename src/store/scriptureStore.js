@@ -29,6 +29,14 @@ export const useScriptureStore = create(
       activeTranslation: DEFAULT_TRANSLATION,
       searchMode: 'fuzzy',
 
+      currentBook: null,
+      currentChapter: null,
+      confidence: 0,
+      lastDetectionTime: null,
+      isListening: false,
+      transcript: '',
+      detectionSource: null,
+
       setQuery: (query) => set({ query }),
       setSearchMode: (searchMode) => set({ searchMode }),
       setSearching: (isSearching) => set({ isSearching }),
@@ -38,6 +46,25 @@ export const useScriptureStore = create(
       setTranslation: (activeTranslation) => set({ activeTranslation }),
 
       setActiveVerse: (verse) => set({ activeVerse: verse }),
+
+      setCurrentBook: (currentBook) => set({ currentBook }),
+      setCurrentChapter: (currentChapter) => set({ currentChapter }),
+      setConfidence: (confidence) => set({ confidence }),
+      setLastDetectionTime: (lastDetectionTime) => set({ lastDetectionTime }),
+      setListening: (isListening) => set({ isListening }),
+      setTranscript: (transcript) => set({ transcript }),
+      setDetectionSource: (detectionSource) => set({ detectionSource }),
+
+      setDetectionResult: ({ verse, book, chapter, confidence, source }) => {
+        set({
+          activeVerse: verse,
+          currentBook: book,
+          currentChapter: chapter,
+          confidence,
+          lastDetectionTime: Date.now(),
+          detectionSource: source,
+        })
+      },
 
       addToHistory: (query) => {
         const history = [
@@ -71,6 +98,15 @@ export const useScriptureStore = create(
       clearHistory: () => set({ searchHistory: [] }),
 
       clearResults: () => set({ results: [], activeVerse: null, searchError: null }),
+
+      clearDetection: () => set({
+        activeVerse: null,
+        currentBook: null,
+        currentChapter: null,
+        confidence: 0,
+        lastDetectionTime: null,
+        detectionSource: null,
+      }),
 
       loadChapter: async (book, chapter) => {
         const translation = getApiCode(get().activeTranslation)

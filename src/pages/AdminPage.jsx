@@ -1,93 +1,45 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useAuth } from '../hooks/useAuth'
 import { useScriptureStore } from '../store/scriptureStore'
 import { useSoundStore } from '../store/soundStore'
-import { useProjectionStore } from '../store/projectionStore'
-import { TRANSLATIONS, DEFAULT_TRANSLATION } from '../data/versions'
+import { useProjectionStore, themeConfig } from '../store/projectionStore'
+import { TRANSLATIONS } from '../data/versions'
+import { getRecentSessions } from '../lib/firestore'
 import Button from '../components/ui/Button'
 import Badge from '../components/ui/Badge'
 
-const USAGE_KEY = 'dmentalist-usage'
-
-function loadUsage() {
-  try {
-    return JSON.parse(localStorage.getItem(USAGE_KEY)) || { searchesToday: 0, searchesWeek: 0, topQueries: [], dailyLog: {} }
-  } catch {
-    return { searchesToday: 0, searchesWeek: 0, topQueries: [], dailyLog: {} }
-  }
-}
-
 export default function AdminPage() {
-  const [authenticated, setAuthenticated] = useState(false)
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const { user, logout } = useAuth()
   const [activeTab, setActiveTab] = useState('stats')
+  const [sessions, setSessions] = useState([])
+  const [loadingSessions, setLoadingSessions] = useState(true)
 
   const scripture = useScriptureStore()
   const sound = useSoundStore()
   const projection = useProjectionStore()
 
-  // ----- Password gate -----
-  const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD
-  const handleLogin = (e) => {
-    e.preventDefault()
-    if (!adminPassword) {
-      setAuthenticated(true)
-      return
-    }
-    if (password === adminPassword) {
-      setAuthenticated(true)
-      setError('')
-    } else {
-      setError('Incorrect password')
-    }
-  }
+  useEffect(() => {
+    if (!user) return
+    getRecentSessions(user.uid, 20)
+      .then(setSessions)
+      .catch(() => {})
+      .finally(() => setLoadingSessions(false))
+  }, [user, setLoadingSessions])
 
-  if (!authenticated) {
-    return (
-      <div className="min-h-screen bg-[#0A0F1E] flex items-center justify-center px-4">
-        <div className="w-full max-w-sm">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary-light mb-4 shadow-lg shadow-primary/30">
-              <span className="text-2xl font-display font-bold text-white">D</span>
-            </div>
-            <h1 className="text-xl font-display font-bold text-text-primary">Admin</h1>
-            <p className="text-sm text-text-muted mt-1">Enter admin password to continue</p>
-          </div>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => { setPassword(e.target.value); setError('') }}
-                placeholder="Admin password"
-                className="w-full px-4 py-3 bg-surface-lighter border border-white/10 rounded-xl text-text-primary placeholder-text-muted focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all text-sm"
-                autoFocus
-              />
-              {error && <p className="text-xs text-red-400 mt-1.5">{error}</p>}
-            </div>
-            <Button type="submit" className="w-full justify-center">
-              Sign In
-            </Button>
-          </form>
-          {!adminPassword && (
-            <p className="text-xs text-text-muted text-center mt-4">
-              Set VITE_ADMIN_PASSWORD in .env to secure this page
-            </p>
-          )}
-        </div>
-      </div>
-    )
-  }
-
-  const usage = loadUsage()
+  const totalVersesProjected = sessions.reduce(
+    (sum, s) => sum + (s.verses?.length || 0), 0
+  )
 
   const tabs = [
     { id: 'stats', label: 'Usage Stats' },
     { id: 'translations', label: 'Translations' },
     { id: 'sound', label: 'Sound Mode' },
     { id: 'projection', label: 'Projection' },
+    { id: 'sessions', label: 'Service Logs' },
     { id: 'data', label: 'Data' },
   ]
+
+  const USAGE_KEY = 'dmentalist-usage'
 
   const clearAllData = () => {
     localStorage.removeItem('dmentalist-v1')
@@ -104,7 +56,7 @@ export default function AdminPage() {
     projection.setShowReference(true)
     projection.setShowTranslation(true)
     sound.setSensitivity('medium')
-    alert('All local data cleared. Page will reload.')
+    alert('All local data cleared.')
     window.location.reload()
   }
 
@@ -115,13 +67,18 @@ export default function AdminPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-display font-bold text-text-primary">Admin</h1>
-            <p className="text-sm text-text-muted mt-0.5">Manage your D'mentalist configuration</p>
+            <p className="text-sm text-text-muted mt-0.5">
+              {user?.email}
+            </p>
           </div>
-          <Badge variant="success">Connected</Badge>
+          <div className="flex items-center gap-3">
+            <Badge variant="success">{sessions.length} sessions</Badge>
+            <Button size="sm" variant="secondary" onClick={logout}>Sign Out</Button>
+          </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 p-1 rounded-xl bg-surface-lighter border border-white/5 w-fit">
+        <div className="flex gap-1 p-1 rounded-xl bg-surface-lighter border border-white/5 w-fit flex-wrap">
           {tabs.map(tab => (
             <button
               key={tab.id}
@@ -142,79 +99,74 @@ export default function AdminPage() {
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="p-5 rounded-xl bg-surface-lighter border border-white/5">
-                <p className="text-xs text-text-muted uppercase tracking-wider">Searches Today</p>
-                <p className="text-3xl font-bold text-text-primary mt-1">{usage.searchesToday}</p>
+                <p className="text-xs text-text-muted uppercase tracking-wider">Service Sessions</p>
+                <p className="text-3xl font-bold text-text-primary mt-1">{sessions.length}</p>
               </div>
               <div className="p-5 rounded-xl bg-surface-lighter border border-white/5">
-                <p className="text-xs text-text-muted uppercase tracking-wider">This Week</p>
-                <p className="text-3xl font-bold text-text-primary mt-1">{usage.searchesWeek}</p>
+                <p className="text-xs text-text-muted uppercase tracking-wider">Verses Projected</p>
+                <p className="text-3xl font-bold text-text-primary mt-1">{totalVersesProjected}</p>
               </div>
               <div className="p-5 rounded-xl bg-surface-lighter border border-white/5">
                 <p className="text-xs text-text-muted uppercase tracking-wider">History Size</p>
                 <p className="text-3xl font-bold text-text-primary mt-1">{scripture.searchHistory.length}</p>
               </div>
             </div>
-
-            <div className="p-5 rounded-xl bg-surface-lighter border border-white/5">
-              <h3 className="text-sm font-semibold text-text-primary mb-3">Most Searched Verses</h3>
-              {usage.topQueries.length === 0 ? (
-                <p className="text-sm text-text-muted">No searches yet.</p>
-              ) : (
-                <div className="space-y-1.5">
-                  {usage.topQueries.slice(0, 10).map((q, i) => (
-                    <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg bg-surface/50">
-                      <span className="text-sm text-text-primary truncate">{q.query}</span>
-                      <span className="text-xs text-text-muted ml-4 tabular-nums">{q.count}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
         )}
 
         {/* Translation settings */}
         {activeTab === 'translations' && (
-          <div className="p-5 rounded-xl bg-surface-lighter border border-white/5 space-y-4">
-            <div>
-              <h3 className="text-sm font-semibold text-text-primary">Translation Settings</h3>
-              <p className="text-xs text-text-muted mt-0.5">Select the active translation for searches</p>
-            </div>
-            <div className="space-y-2">
-              {Object.entries(TRANSLATIONS).map(([id, t]) => (
-                <label
-                  key={id}
-                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                    scripture.activeTranslation === id
-                      ? 'border-primary/40 bg-primary/10'
-                      : 'border-white/5 bg-surface/50 hover:bg-surface-lighter'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="translation"
-                    checked={scripture.activeTranslation === id}
-                    onChange={() => scripture.setTranslation(id)}
-                    className="w-4 h-4 accent-primary"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-text-primary">{t.label}</span>
-                      <Badge variant="default">{t.short}</Badge>
+          <div className="space-y-4">
+            <div className="p-5 rounded-xl bg-surface-lighter border border-white/5 space-y-4">
+              <div>
+                <h3 className="text-sm font-semibold text-text-primary">Translation Settings</h3>
+                <p className="text-xs text-text-muted mt-0.5">Select the active translation for searches</p>
+              </div>
+              <div className="space-y-2">
+                {Object.entries(TRANSLATIONS).map(([id, t]) => (
+                  <label
+                    key={id}
+                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                      scripture.activeTranslation === id
+                        ? 'border-primary/40 bg-primary/10'
+                        : 'border-white/5 bg-surface/50 hover:bg-surface-lighter'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="translation"
+                      checked={scripture.activeTranslation === id}
+                      onChange={() => scripture.setTranslation(id)}
+                      className="w-4 h-4 accent-primary"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-text-primary">{t.label}</span>
+                        <Badge variant="default">{t.short}</Badge>
+                      </div>
+                      <p className="text-xs text-text-muted">
+                        API: {t.apiCode}{' '}
+                        {t.publicDomain
+                          ? <span className="text-emerald-400">(Public Domain)</span>
+                          : <span className="text-accent">(Licensed — fallback used)</span>
+                        }
+                      </p>
                     </div>
-                    <p className="text-xs text-text-muted">
-                      API: {t.apiCode}{' '}
-                      {t.publicDomain
-                        ? <span className="text-emerald-400">(Public Domain)</span>
-                        : <span className="text-accent">(Licensed — fallback used)</span>
-                      }
-                    </p>
-                  </div>
-                  {scripture.activeTranslation === id && (
-                    <Badge variant="primary">Active</Badge>
-                  )}
-                </label>
-              ))}
+                    {scripture.activeTranslation === id && (
+                      <Badge variant="primary">Active</Badge>
+                    )}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="p-4 rounded-xl bg-accent/10 border border-accent/20">
+              <p className="text-xs text-accent font-medium mb-1">⚠ Translation Notice</p>
+              <p className="text-xs text-text-secondary leading-relaxed">
+                bible-api.com only serves public-domain translations (KJV, WEB, Darby, ASV, YLT).
+                NIV and ESV are copyrighted and require a licensed API provider like{' '}
+                <a href="https://scripture.api.bible" className="text-primary-light hover:underline" target="_blank" rel="noopener noreferrer">scripture.api.bible</a>.
+                Until then, selecting NIV shows WEB text, ESV shows Darby, and NKJV shows KJV.
+              </p>
             </div>
           </div>
         )}
@@ -330,17 +282,56 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* Service Logs */}
+        {activeTab === 'sessions' && (
+          <div className="space-y-4">
+            <div className="p-5 rounded-xl bg-surface-lighter border border-white/5">
+              <h3 className="text-sm font-semibold text-text-primary mb-3">Service Sessions</h3>
+              {loadingSessions ? (
+                <p className="text-sm text-text-muted">Loading sessions...</p>
+              ) : sessions.length === 0 ? (
+                <p className="text-sm text-text-muted">No service sessions yet. Start projecting verses to log them.</p>
+              ) : (
+                <div className="space-y-2">
+                  {sessions.map((s) => (
+                    <div key={s.id} className="p-3 rounded-lg bg-surface/50 border border-white/5">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-text-muted">
+                          {s.date?.toDate?.()?.toLocaleString() || 'Just now'}
+                        </span>
+                        <Badge variant="default">{s.verses?.length || 0} verses</Badge>
+                      </div>
+                      {s.verses?.length > 0 && (
+                        <div className="text-xs text-text-secondary space-y-0.5 mt-1">
+                          {s.verses.slice(0, 3).map((v, i) => (
+                            <div key={i}>
+                              {v.reference || v.ref} — {v.translation}
+                            </div>
+                          ))}
+                          {s.verses.length > 3 && (
+                            <div className="text-text-muted">+{s.verses.length - 3} more</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Data section */}
         {activeTab === 'data' && (
           <div className="p-5 rounded-xl bg-surface-lighter border border-white/5 space-y-4">
             <div>
               <h3 className="text-sm font-semibold text-text-primary">Data & Storage</h3>
-              <p className="text-xs text-text-muted mt-0.5">Manage local application data</p>
+              <p className="text-xs text-text-muted mt-0.5">Manage application data</p>
             </div>
             <div className="space-y-2 text-sm text-text-secondary bg-surface/50 rounded-lg p-4">
-              <p>All data is stored locally in your browser (localStorage).</p>
-              <p>No external servers or databases are used.</p>
-              <p>Clearing data will reset all settings, search history, and usage stats.</p>
+              <p>Search history and settings are stored locally (localStorage).</p>
+              <p>Service logs are saved to Firebase and synced across devices.</p>
+              <p>Clearing data will reset all local settings and search history.</p>
             </div>
             <Button variant="danger" onClick={clearAllData}>
               Clear All Local Data
@@ -350,11 +341,4 @@ export default function AdminPage() {
       </div>
     </div>
   )
-}
-
-// Inline themeConfig for the theme previews
-const themeConfig = {
-  dark: { label: 'Dark', backgroundColor: '#0f0f1a', textColor: '#f1f5f9' },
-  light: { label: 'Light', backgroundColor: '#f8fafc', textColor: '#0f172a' },
-  warm: { label: 'Warm', backgroundColor: '#1c1917', textColor: '#fef3c7' },
 }

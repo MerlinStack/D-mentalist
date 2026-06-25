@@ -8,18 +8,18 @@ function barColor(index, level) {
     return { r: 100, g: 116, b: 139, a: 0.25 }
   }
 
-  // Low — left bars blue-grey
+  // Low — left bars muted
   if (level < 35) {
     const fade = Math.max(0.2, 1 - Math.abs(zone - 0.25) * 1.5)
-    return { r: 59, g: 130, b: 246, a: fade * 0.6 }
+    return { r: 139, g: 92, b: 246, a: fade * 0.6 }
   }
 
-  // Medium — centre bars blue
+  // Medium — centre bars purple
   if (level < 65) {
     if (zone < 0.65) {
-      return { r: 59, g: 130, b: 246, a: 0.7 }
+      return { r: 139, g: 92, b: 246, a: 0.7 }
     }
-    return { r: 59, g: 130, b: 246, a: 0.35 }
+    return { r: 139, g: 92, b: 246, a: 0.35 }
   }
 
   // High / clipping — right bars red
@@ -27,7 +27,7 @@ function barColor(index, level) {
     const intensity = Math.min((level - 65) / 35, 1)
     return { r: 239, g: 68 + Math.round((1 - intensity) * 60), b: 68, a: 0.5 + intensity * 0.3 }
   }
-  return { r: 59, g: 130, b: 246, a: 0.55 }
+  return { r: 139, g: 92, b: 246, a: 0.55 }
 }
 
 export default function AudioMeter({ level }) {

@@ -6,9 +6,9 @@ export const TRANSLATIONS = [
 ]
 
 export const SEARCH_MODES = {
-  EXACT: 'exact',
-  FUZZY: 'fuzzy',
-  SEMANTIC: 'semantic',
+  EXACT: 'Reference',
+  FUZZY: 'Quote',
+  SEMANTIC: 'Theme',
   VOICE: 'voice',
 }
 

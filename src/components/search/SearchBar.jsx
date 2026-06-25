@@ -21,6 +21,7 @@ export default function SearchBar() {
   const [localQuery, setLocalQuery] = useState(query)
   const [placeholderIndex, setPlaceholderIndex] = useState(0)
   const inputRef = useRef(null)
+  const debounceRef = useRef(null)
 
   useEffect(() => {
     setLocalQuery(query)
@@ -44,12 +45,20 @@ export default function SearchBar() {
     return () => window.removeEventListener('keydown', handle)
   }, [])
 
-  const handleSearch = () => {
-    if (localQuery.trim() && !isSearching) search(localQuery.trim())
+  const handleChange = (e) => {
+    const value = e.target.value
+    setLocalQuery(value)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      if (value.trim() && !isSearching) search(value.trim())
+    }, 400)
   }
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') handleSearch()
+    if (e.key === 'Enter' && localQuery.trim() && !isSearching) {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      search(localQuery.trim())
+    }
   }
 
   return (
@@ -67,7 +76,7 @@ export default function SearchBar() {
             id="search-input"
             type="text"
             value={localQuery}
-            onChange={e => setLocalQuery(e.target.value)}
+            onChange={handleChange}
             onKeyDown={handleKeyDown}
             placeholder={placeholders[placeholderIndex]}
             className={`w-full pl-12 pr-4 py-3.5 bg-surface-lighter border rounded-xl text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm ${
@@ -111,18 +120,6 @@ export default function SearchBar() {
           ))}
         </div>
 
-        <button
-          type="button"
-          onClick={handleSearch}
-          disabled={isSearching || !localQuery.trim()}
-          className="px-5 py-3.5 bg-primary hover:bg-primary-light disabled:opacity-50 text-white rounded-xl text-sm font-medium transition-all shadow-lg shadow-primary/25 hover:shadow-primary/40"
-        >
-          {isSearching ? (
-            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          ) : (
-            'Search'
-          )}
-        </button>
       </div>
     </div>
   )

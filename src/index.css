@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #4F6BFF;
-  --color-primary-light: #6B84FF;
-  --color-primary-dark: #3A52CC;
+  --color-primary: #8B5CF6;
+  --color-primary-light: #A78BFA;
+  --color-primary-dark: #7C3AED;
   --color-accent: #FFD580;
-  --color-surface: #0A0F1E;
-  --color-surface-light: #1A2035;
-  --color-surface-lighter: #2D3A5C;
+  --color-surface: #0F0F0F;
+  --color-surface-light: #1A1A1A;
+  --color-surface-lighter: #2A2A2A;
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #94A3B8;
   --color-text-muted: #64748B;
@@ -50,8 +50,8 @@ body {
 }
 
 @keyframes border-pulse {
-  0%, 100% { border-color: rgba(79, 107, 255, 0.3); }
-  50% { border-color: rgba(79, 107, 255, 0.7); }
+  0%, 100% { border-color: rgba(139, 92, 246, 0.3); }
+  50% { border-color: rgba(139, 92, 246, 0.7); }
 }
 
 @utility animate-pulse-glow {

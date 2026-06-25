@@ -4,7 +4,7 @@ import { persist } from 'zustand/middleware'
 export const themeConfig = {
   dark: {
     label: 'Dark',
-    backgroundColor: '#0f0f1a',
+    backgroundColor: '#0F0F0F',
     textColor: '#f1f5f9',
     accentColor: '#8b5cf6',
     fontFamily: 'Playfair Display, serif',
@@ -27,34 +27,53 @@ export const themeConfig = {
 
 const fontSizeMap = {
   medium: 36,
-  large: 48,
+  large:  48,
   xlarge: 64,
 }
 
 export const useProjectionStore = create(
   persist(
     (set, get) => ({
-      currentVerse: null,
-      theme: 'dark',
-      fontSize: 'large',
-      showReference: true,
+      currentVerse:    null,
+      theme:           'dark',
+      fontSize:        'large',
+      showReference:   true,
       showTranslation: true,
-      queue: [],
+      queue:           [],
+      isProjecting:    false,
 
+      // ✅ FIX: normalise verse shape here so reference is always present
       projectVerse: (verse) => {
+        const normalised = {
+          ...verse,
+          reference: verse.reference || verse.ref || '',
+          ref:       verse.ref       || verse.reference || '',
+        }
         const queue = get().queue
-        set({ currentVerse: verse, queue })
+        set({ currentVerse: normalised, queue, isProjecting: true })
       },
 
-      clearProjection: () => set({ currentVerse: null, queue: [] }),
+      clearProjection: () => set({
+        currentVerse: null,
+        queue:        [],
+        isProjecting: false,
+      }),
 
-      setTheme: (theme) => set({ theme }),
-      setFontSize: (fontSize) => set({ fontSize }),
-      setShowReference: (showReference) => set({ showReference }),
+      setIsProjecting: (val) => set({ isProjecting: val }),
+
+      setTheme:           (theme)           => set({ theme }),
+      setFontSize:        (fontSize)        => set({ fontSize }),
+      setShowReference:   (showReference)   => set({ showReference }),
       setShowTranslation: (showTranslation) => set({ showTranslation }),
 
       addToQueue: (verse) => {
-        const queue = [...get().queue, { ...verse, queuedAt: Date.now() }]
+        const normalised = {
+          ...verse,
+          reference: verse.reference || verse.ref || '',
+          ref:       verse.ref       || verse.reference || '',
+          queuedAt:  Date.now(),
+        }
+        const queue = [...get().queue, normalised]
         set({ queue: queue.slice(-10) })
       },
 
@@ -66,15 +85,19 @@ export const useProjectionStore = create(
 
       projectNext: () => {
         const [next, ...rest] = get().queue
-        set({ currentVerse: next || null, queue: rest })
+        if (next) {
+          set({ currentVerse: next, queue: rest, isProjecting: true })
+        } else {
+          set({ currentVerse: null, queue: [], isProjecting: false })
+        }
       },
     }),
     {
       name: 'dmentalist-projection',
       partialize: (state) => ({
-        theme: state.theme,
-        fontSize: state.fontSize,
-        showReference: state.showReference,
+        theme:           state.theme,
+        fontSize:        state.fontSize,
+        showReference:   state.showReference,
         showTranslation: state.showTranslation,
       }),
     }
